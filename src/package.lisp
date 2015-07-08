@@ -60,8 +60,8 @@ Returns (values result unify-p), where the result is an alist containing the ass
 unify-p is a boolean indicating if the given template unifies against the given types."
   (let ((type (introspect-environment:typexpand type))
         (template (introspect-environment:typexpand template)))
-  (if (atom type)
-      (type-unify1-atomic typevars template type)
+    (if (atom type)
+        (type-unify1-atomic typevars template type)
         (type-unify1-compound typevars template type))))
 
 (defun type-unify1-atomic (typevars template type)
@@ -193,14 +193,8 @@ unify-p is a boolean indicating if the given template unifies against the given 
     ;; typexpand is implementation dependent, and it may not expand some
     ;; types e.g. string -> (array character).
     ;; Therefore we need TYPE-R.
-    (((array-subtype element-type1 dimensions1)
-      (array-subtype element-type2 dimensions2))
-     (multiple-value-match (type-unify1 typevars element-type1 element-type2)
-       ((mapping1 t)
-        (multiple-value-match (dimentions-unify typevars dimensions1 dimensions2)
-          ((mapping2 t)
-           (multiple-value-match (merge-mappings-as-and mapping mapping2)
-             ((mapping3 t) mapping3)))))))
+    (((array-subtype) (array-subtype))
+     (unify-arrayoid typevars template type))
     (((real-subtype) (real-subtype))
      (unify-numeroid typevars template type))
     ((list* head elements1)
@@ -262,6 +256,20 @@ unify-p is a boolean indicating if the given template unifies against the given 
         ((mapping2 t)
          (multiple-value-match (merge-mappings-as-and mapping mapping2)
            ((mapping3 t) mapping3))))))))
+
+(defun unify-arrayoid (typevars template type)
+  (ematch* (template type)
+    (((array-subtype element-type1 dimensions1)
+      (array-subtype element-type2 dimensions2))
+     (multiple-value-match (type-unify1 typevars element-type1 element-type2)
+       ((mapping1 t)
+        (multiple-value-match (dimentions-unify typevars dimensions1 dimensions2)
+          ((mapping2 t)
+           (multiple-value-match (merge-mappings-as-and mapping1 mapping2)
+             ((mapping3 t) mapping3)))))))))
+
+(defun dimensions-unify (typevars dimensions1 dimensions2)
+  )
 
 (defun pad (max thing list)
   (append list
