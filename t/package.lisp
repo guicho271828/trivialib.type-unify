@@ -113,7 +113,9 @@
   (is (equal '((a . fixnum)) (type-unify '(a) '(a a) '(fixnum fixnum))))
   (is (equal '((a . fixnum)) (type-unify '(a) '(a a) '(fixnum integer))))
   (is (equal '((a . (and (array * 6) (array char *))))
-             (type-unify '(a) '(a a) '((array * 6) (array char *)))))
+             (type-unify '(a)
+                         '(a a)
+                         '((array * 6) (array char *)))))
   (is-false
    (type-unify '(a) '(a a) '(fixnum float)))
   (is-false

@@ -3,6 +3,31 @@
 
 ## Usage
 
+```cl
+(type-unify1 '(a)
+             '(array a *)
+             '(array char (3)))
+;; '((a . char)), t
+
+
+
+(type-unify '(a)
+            '(a a)
+            '((array * 6) (array char *)))
+
+;; --> '((a . (and (array * 6) (array char *)))), t
+
+
+
+(type-unify '(a) '(a a) '(fixnum float))
+;; -> nil, nil
+
+
+
+(type-unify '(a) '() '())
+;; -> nil, t  (a is unassigned)
+```
+
 
 ## Dependencies
 This library is at least tested on implementation listed below:
