@@ -4,10 +4,10 @@
 ## Usage
 
 ```cl
-(type-unify1 '(a)
-             '(array a *)
-             '(array char (3)))
-;; '((a . char)), t
+(type-unify1 '(a)                ; type variable
+             '(array a *)        ; template
+             '(array char (3)))  ; actual type specifier
+;; '((a . char)), t              ; unification
 
 
 
