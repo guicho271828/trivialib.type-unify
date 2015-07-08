@@ -1,5 +1,7 @@
 
-# Trivialib.Type-Unify - unifies a polimorphic type specifier with type variables against actual type specifiers
+# Trivialib.Type-Unify
+
+[![Build Status](https://travis-ci.org/guicho271828/trivialib.type-unify.svg)](https://travis-ci.org/guicho271828/trivialib.type-unify)
 
 ## Usage
 
