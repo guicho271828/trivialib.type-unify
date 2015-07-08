@@ -13,6 +13,19 @@ Copyright (c) 2015 Masataro Asai (guicho2.71828@gmail.com)
 
 ;; blah blah blah.
 
+(defpattern every (subpattern)
+  (with-gensyms (it)
+    `(and (type list)
+          (guard ,it
+                 (every (lambda-match
+                          (,subpattern t))
+                        ,it)))))
+
+(defpattern dimension ()
+  `(or '* (integer)))
+(defpattern dimensions ()
+  `(every (dimension)))
+
 ;;; type unification
 ;; 1. Any type variable unifies with any type expression, and is
 ;; instantiated to that expression. A specific theory might restrict this
@@ -71,9 +84,7 @@ unify-p is a boolean indicating if the given template unifies against the given 
       (((guard typevar (member typevar typevars)) _)
        ;; template is an atomic typevar
        (values (list (cons typevar type)) t))
-      (('* _)
-       (warn "Avoid using * in type specification, it matches everything!")
-       (values nil t))
+      (('* _) (values nil t))
       (((symbol) _)
        ;; template is a standard atomic type, and not a typevar
        (if (subtypep type template)
@@ -82,7 +93,7 @@ unify-p is a boolean indicating if the given template unifies against the given 
       ;; compound types in file:///usr/share/doc/hyperspec/Body/04_bc.htm
       (((list* (or 'eql 'member 'satisfies) args) _)
        (when (intersection args typevars)
-         (error "Type specifier ~a should not contain a type variable! ~% ~a" args template))
+         (error "Type specifier ~a with type variables are not supported! ~% ~a" args template))
        (if (subtypep type template)
            (values nil t)
            nil))
@@ -141,32 +152,12 @@ unify-p is a boolean indicating if the given template unifies against the given 
     acc))
 
 
-(defpattern every (subpattern)
-  (with-gensyms (it)
-    `(and (type list)
-          (guard ,it
-                 (every (lambda-match
-                          (,subpattern t))
-                        ,it)))))
-
-(defpattern dimensions ()
-  `(or '* (integer) (every (or '* (integer)))))
-
 (defun strict-subtypep-or-indifferent (a b)
-  (match* (a b)
-    ((_ '*) t)
-    (((type integer) (type integer)) nil)
-    (((type integer) (dimensions)) t)
-    (((dimensions) (type integer)) nil)
-    (((dimensions) (dimensions)) (values nil t))
-    ((_ _)
-     ;; it could be a list of dimensions e.g. (2 2 *)
-     ;; or a compound type specifier
-     (if (not (subtypep a b))
-         (if (not (subtypep b a))
-             (values nil t)
-             nil)
-         t))))
+  (if (not (subtypep a b))
+      (if (not (subtypep b a))
+          (values nil t)
+          nil)
+      t))
 
 (defun merge-mappings-as-or (mapping1 mapping2)
   (let (plist)
@@ -179,11 +170,16 @@ unify-p is a boolean indicating if the given template unifies against the given 
            ;; note: the one occurring earlier in sequence is discarded
            ;; file:///usr/share/doc/hyperspec/Body/f_rm_dup.htm
            ;; The order of the elements remaining in the result is the same as the order in which they appear in sequence. 
-           for %typevals = (remove-smaller typevals #'strict-subtypep-or-indifferent)
-           if (= (length %typevals) 1)
-             collect (cons typevar (car %typevals))
-           else
-             collect (cons typevar `(or ,@%typevals))))))
+           for %typevals = (remove-if (lambda-match ((or (dimension) (dimensions)) t)) typevals)
+           for %dimensions = (remove-if-not (lambda-match ((or (dimension) (dimensions)) t)) typevals)
+           for %%typevals = (remove-smaller typevals #'strict-subtypep-or-indifferent)
+           collect
+           (cons typevar
+                 (if %%typevals
+                     (if (= (length %%typevals) 1)
+                         (car %%typevals)
+                         `(or ,@%%typevals))
+                     %dimensions))))))
 
 (defun merge-mappings-as-and (mapping1 mapping2)
   (let (plist)
@@ -194,17 +190,22 @@ unify-p is a boolean indicating if the given template unifies against the given 
     (values
      (nreverse
       (loop for (typevar typevals) on plist by #'cddr
-            for %typevals = (remove-larger typevals #'strict-subtypep-or-indifferent)
-            for %%typevals = (remove-if (lambda-match ((dimensions) t)) %typevals)
-            if (and %%typevals
-                    (subtypep `(and ,@%%typevals) nil)) ;; (and ,@typevals) == nil
-              do (return-from merge-mappings-as-and)
-            else
-              collect (cons typevar (if (= (length %typevals) 1)
-                                        (car %typevals)
-                                        `(and ,@%typevals)))))
+            for %typevals = (remove-if (lambda-match ((or (dimension) (dimensions)) t)) typevals)
+            for %dimensions = (remove-if-not (lambda-match ((or (dimension) (dimensions)) t)) typevals)
+            for %%typevals = (remove-larger %typevals #'strict-subtypep-or-indifferent)
+            for %%dimensions = (handler-case (reduce #'merge-dimensions %dimensions :initial-value '*)
+                                 (match-error () (return-from merge-mappings-as-and)))
+            ;; a variable should not be a type and a dimension at the same time
+            do (when %typevals
+                 (when (or %dimensions (subtypep `(and ,@%typevals) nil))
+                   (return-from merge-mappings-as-and)))
+            collect (cons typevar
+                          (if %%typevals
+                              (if (= (length %%typevals) 1)
+                                  (car %%typevals)
+                                  `(and ,@%%typevals))
+                              %%dimensions))))
      t)))
-
 
 (defun unify-numeroid (typevars template type)
   (match* (template type)
@@ -272,3 +273,15 @@ unify-p is a boolean indicating if the given template unifies against the given 
      (values `((,x . ,dimensions2)) t))
     ((nil nil)
      (values nil t))))
+
+(defun merge-dimensions (&optional a b)
+  (ematch* (a b)
+    (('* _) b)
+    ((_ '*) a)
+    (((type integer) (and (type integer) (= a))) a)
+    (((type integer) (dimensions)) (if (= a (length b)) b (fail)))
+    (((dimensions) (type integer)) (if (= b (length a)) a (fail)))
+    (((dimensions) (dimensions))   (mapcar #'merge-dimensions a b))))
+
+
+

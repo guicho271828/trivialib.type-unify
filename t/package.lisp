@@ -1,6 +1,6 @@
 #|
-  This file is a part of trivialib.type-unify project.
-  Copyright (c) 2015 Masataro Asai (guicho2.71828@gmail.com)
+This file is a part of trivialib.type-unify project.
+Copyright (c) 2015 Masataro Asai (guicho2.71828@gmail.com)
 |#
 
 (in-package :cl-user)
@@ -87,7 +87,7 @@
              (type-unify1 '(a)
                           '(and simple-array a)
                           'simple-string)))
-  
+
   (is (equal '((a . character))
              (type-unify1 '(a)
                           '(array a *)
@@ -102,10 +102,21 @@
              (type-unify1 '(a b)
                           '(array a (* b))
                           '(array character (3 4)))))
-  
+
   (is-false
    (type-unify1 '(a)
                 '(array a (* 2))
+                '(array character (3 4))))
+
+  ;; unification within template
+  (is (equal '((a . 3))
+             (type-unify1 '(a)
+                          '(array * (a a))
+                          '(array character (3 3)))))
+
+  (is-false
+   (type-unify1 '(a)
+                '(array * (a a))
                 '(array character (3 4)))))
 
 (test type-unify
