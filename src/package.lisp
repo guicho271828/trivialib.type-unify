@@ -229,3 +229,7 @@ unify-p is a boolean indicating if the given template unifies against the given 
                            (pad max '* elements2)
                            (pad max '* elements1))
                   t)))))))
+
+(defun pad (max thing list)
+  (append list
+          (make-list (- max (length list)) :initial-element thing)))
