@@ -58,9 +58,11 @@ TEMPLATE is a type specifiers, but may contain the elements of TYPEVARS somewher
 
 Returns (values result unify-p), where the result is an alist containing the assignment of unification and
 unify-p is a boolean indicating if the given template unifies against the given types."
+  (let ((type (introspect-environment:typexpand type))
+        (template (introspect-environment:typexpand template)))
   (if (atom type)
       (type-unify1-atomic typevars template type)
-      (type-unify1-compound typevars template type)))
+        (type-unify1-compound typevars template type))))
 
 (defun type-unify1-atomic (typevars template type)
   (ematch template
