@@ -5,7 +5,7 @@ Copyright (c) 2015 Masataro Asai (guicho2.71828@gmail.com)
 
 (in-package :cl-user)
 (defpackage trivialib.type-unify
-  (:use :cl :alexandria :trivia)
+  (:use :cl :alexandria :trivia :trivia.fail :type-r)
   (:export #:type-unify
           #:type-unify1
           #:type-unification-error))
