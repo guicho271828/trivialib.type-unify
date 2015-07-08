@@ -88,34 +88,34 @@
                           '(and simple-array a)
                           'simple-string)))
   
-  (is (equal '((a . char))
+  (is (equal '((a . character))
              (type-unify1 '(a)
                           '(array a *)
-                          '(array char (3)))))
+                          '(array character (3)))))
 
-  (is (equal '((a . char) (b . (1 *)))
+  (is (equal '((a . character) (b . (1 *)))
              (type-unify1 '(a b)
                           '(array a b)
-                          '(array char (1 *)))))
+                          '(array character (1 *)))))
 
-  (is (equal '((a . char) (b . 4))
+  (is (equal '((a . character) (b . 4))
              (type-unify1 '(a b)
                           '(array a (* b))
-                          '(array char (3 4)))))
+                          '(array character (3 4)))))
   
   (is-false
    (type-unify1 '(a)
                 '(array a (* 2))
-                '(array char (3 4)))))
+                '(array character (3 4)))))
 
 (test type-unify
   (is (equal '((a . fixnum)) (type-unify '(a) '(a) '(fixnum))))
   (is (equal '((a . fixnum)) (type-unify '(a) '(a a) '(fixnum fixnum))))
   (is (equal '((a . fixnum)) (type-unify '(a) '(a a) '(fixnum integer))))
-  (is (equal '((a . (and (array * 6) (array char *))))
+  (is (equal '((a . (and (array * 6) (array character *))))
              (type-unify '(a)
                          '(a a)
-                         '((array * 6) (array char *)))))
+                         '((array * 6) (array character *)))))
   (is-false
    (type-unify '(a) '(a a) '(fixnum float)))
   (is-false
