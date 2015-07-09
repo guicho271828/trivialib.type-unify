@@ -81,6 +81,13 @@ unify-p is a boolean indicating if the given template unifies against the given 
        (unify-arrayoid typevars template type))
       (((real-subtype) (real-subtype))    ; mod, unsigned-byte, bignum...
        (unify-numeroid typevars template type))
+      (((cons-type car1 cdr1) (cons-type car2 cdr2))
+       (multiple-value-match (type-unify1 typevars car1 car2)
+         ((mapping1 t)
+          (multiple-value-match (type-unify1 typevars cdr1 cdr2)
+            ((mapping2 t)
+             (multiple-value-match (merge-mappings-as-and mapping1 mapping2)
+               ((mapping3 t) (values mapping3 t))))))))
       (((guard typevar (member typevar typevars)) _)
        ;; template is an atomic typevar
        (values (list (cons typevar type)) t))
