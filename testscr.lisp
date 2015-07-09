@@ -1,5 +1,6 @@
 
 (in-package :cl-user)
+(ql:quickload '(:alexandria :trivia :introspect-environment :type-r))
 
 (uiop:quit (if (handler-case
                    (progn
