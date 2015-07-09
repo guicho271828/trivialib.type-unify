@@ -7,8 +7,7 @@ Copyright (c) 2015 Masataro Asai (guicho2.71828@gmail.com)
 (defpackage :trivialib.type-unify.test
   (:use :cl
         :trivialib.type-unify
-        :fiveam
-        :iterate :alexandria :trivia))
+        :fiveam :alexandria :trivia))
 (in-package :trivialib.type-unify.test)
 
 
