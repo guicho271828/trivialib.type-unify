@@ -72,7 +72,7 @@ TEMPLATE is a type specifiers, but may contain the elements of TYPEVARS somewher
 Returns (values result unify-p), where the result is an alist containing the assignment of unification and
 unify-p is a boolean indicating if the given template unifies against the given types."
   (let ((template (introspect-environment:typexpand template))
-        (type (introspect-environment:typexpand type)))
+        (type     (introspect-environment:typexpand type)))
     (ematch* (template type)
       ;; typexpand is implementation dependent, and it may not expand some
       ;; types e.g. string -> (array character).

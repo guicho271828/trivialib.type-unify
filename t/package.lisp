@@ -10,7 +10,24 @@ Copyright (c) 2015 Masataro Asai (guicho2.71828@gmail.com)
         :fiveam :alexandria :trivia))
 (in-package :trivialib.type-unify.test)
 
+(defmacro unify-empty (&body body)
+  `(multiple-value-bind (unification unified?)
+       (progn ,@body)
+     (is-false unification)
+     (is-true unified?)))
 
+(defmacro unify-fail (&body body)
+  `(multiple-value-bind (unification unified?)
+       (progn ,@body)
+     (is-false unification)
+     (is-false unified?)))
+
+(defmacro unify-with (assignment &body body)
+  `(multiple-value-bind (unification unified?)
+       (progn ,@body)
+     (is (set-equal unification ,assignment :test #'equal)
+         "Failed ~A, result: ~a" ',(car body) unification)
+     (is-true unified?)))
 
 (def-suite :trivialib.type-unify)
 (in-suite :trivialib.type-unify)
@@ -70,72 +87,121 @@ Copyright (c) 2015 Masataro Asai (guicho2.71828@gmail.com)
              '((a . fixnum)) '((a . character)))))
 
 (test type-unify1
-  (is (equal '((a . fixnum))
-             (type-unify1 '(a) 'a 'fixnum)))
+  (unify-with '((a . fixnum))
+    (type-unify1 '(a) 'a 'fixnum))
   
-  (is (equal '((a . fixnum))
-             (type-unify1 '(a) '(or float a) 'fixnum)))
+  (unify-with '((a . fixnum))
+    (type-unify1 '(a) '(or float a) 'fixnum))
   
-  (is (equal nil
-             (type-unify1 '(a) '(or float fixnum) 'fixnum)))
+  (unify-empty
+   (type-unify1 '(a) '(or float fixnum) 'fixnum))
 
-  (is-false
-   (nth-value 1 (type-unify1 '(a) 'float 'fixnum)))
+  (unify-fail
+   (type-unify1 '(a) 'float 'fixnum))
 
-  (is (equal '((a . simple-string))
-             (type-unify1 '(a)
-                          '(and simple-array a)
-                          'simple-string)))
+  (unify-with '((a . simple-string))
+    (type-unify1 '(a)
+                 '(and simple-array a)
+                 'simple-string))
 
-  (is (equal '((a . character))
-             (type-unify1 '(a)
-                          '(array a *)
-                          '(array character (3)))))
+  (unify-with '((a . character))
+    (type-unify1 '(a)
+                 '(array a *)
+                 '(array character (3))))
 
-  (is (equal '((a . character) (b . (1 *)))
-             (type-unify1 '(a b)
-                          '(array a b)
-                          '(array character (1 *)))))
+  (unify-with '((a . character) (b . (1 *)))
+    (type-unify1 '(a b)
+                 '(array a b)
+                 '(array character (1 *))))
 
-  (is (equal '((a . character) (b . 4))
-             (type-unify1 '(a b)
-                          '(array a (* b))
-                          '(array character (3 4)))))
+  (unify-with '((a . character) (b . 4))
+    (type-unify1 '(a b)
+                 '(array a (* b))
+                 '(array character (3 4))))
 
-  (is-false
+  (unify-fail
    (type-unify1 '(a)
                 '(array a (* 2))
                 '(array character (3 4))))
 
   ;; unification within template
-  (is (equal '((a . 3))
-             (type-unify1 '(a)
-                          '(array * (a a))
-                          '(array character (3 3)))))
+  (unify-with '((a . 3))
+    (type-unify1 '(a)
+                 '(array * (a a))
+                 '(array character (3 3))))
 
-  (is-false
+  (unify-fail
    (type-unify1 '(a)
                 '(array * (a a))
-                '(array character (3 4)))))
+                '(array character (3 4))))
+
+
+  (unify-with `((a . ,MOST-POSITIVE-FIXNUM))
+    (type-unify1 '(a) '(integer * a) 'fixnum))
+
+  (unify-with '((a . 31))
+    (type-unify1 '(a) '(integer * a) '(unsigned-byte 5))))
+
+
+
+(test cons
+  (unify-with '((A . FIXNUM) (B . STRING))
+    (type-unify1 '(a b)
+                 '(cons (cons a b) (cons b a))
+                 '(cons (cons fixnum string) (cons string fixnum)))))
+
+
+(test deftype
+  (deftype cons2 (x) `(cons ,x ,x))
+
+  (unify-with '((a . fixnum))
+    (type-unify1 '(a)
+                 '(cons2 (cons2 a))
+                 '(cons (cons fixnum fixnum) (cons fixnum fixnum))))
+  (unify-with '((a . fixnum))
+    (type-unify1 '(a b)
+                 '(cons (cons a a) (cons a a))
+                 '(cons2 (cons2 fixnum)))))
+
 
 (test type-unify
-  (is (equal '((a . fixnum)) (type-unify '(a) '(a) '(fixnum))))
-  (is (equal '((a . fixnum)) (type-unify '(a) '(a a) '(fixnum fixnum))))
-  (is (equal '((a . fixnum)) (type-unify '(a) '(a a) '(fixnum integer))))
-  (is (equal '((a . (and (array * 6) (array character *))))
-             (type-unify '(a)
-                         '(a a)
-                         '((array * 6) (array character *)))))
-  (is-false
-   (type-unify '(a) '(a a) '(fixnum float)))
-  (is-false
-   (nth-value 1 (type-unify '(a) '(a a) '(fixnum float))))
-  (is-false
-   (type-unify '(a) '(a b) '(fixnum float)))
-  (is-false
-   (nth-value 1 (type-unify '(a) '(a b) '(fixnum float))))
-  (is (equal '((a . fixnum) (b . float))
-             (type-unify '(a b) '(a b) '(fixnum float)))))
+  (unify-with '((a . fixnum)) (type-unify '(a) '(a) '(fixnum)))
+  (unify-with '((a . fixnum)) (type-unify '(a) '(a a) '(fixnum fixnum)))
+  (unify-with '((a . fixnum)) (type-unify '(a) '(a a) '(fixnum integer)))
+  (unify-empty (type-unify '()  '(fixnum) '(fixnum)))
+  (unify-empty (type-unify '()  '(number) '(fixnum)))
+  (unify-fail (type-unify '()  '(fixnum) '(number)))
+
+  (unify-fail (type-unify '(a) '(a a) '(fixnum float)))
+  (unify-fail (type-unify '(a) '(a a) '(complex real)))   ; -> nil, nil
+  (unify-fail (type-unify '(a) '(a a) '(rational float))) ; -> nil, nil
+  (unify-fail (type-unify '(a) '(a a) '(integer ratio)))  ; -> nil, nil
+  (unify-fail (type-unify '(a) '(a a) '((array * 6) (array * 7))))        ; -> nil, nil
+  (unify-fail (type-unify '(a) '(a a) '((array * 6) (array * (* *)))))    ; -> nil, nil
+  (unify-fail (type-unify '(a) '(a a) '((array * (* *)) (array * 6))))    ; -> nil, nil
+  (unify-fail (type-unify '(a) '(a a) '((array * (* * *)) (array * (* *)))))    ; -> nil, nil
+  (unify-fail (type-unify '(a) '(a a) '((array * (* *)) (array * (* * *)))))    ; -> nil, nil
+  (unify-fail (type-unify '(a) '(a a) '((array base-char) (array extended-char)))) ; -> nil, nil
+  (unify-fail (type-unify '(a) '(a a) '((array extended-char) (array base-char))))
+
+  ;; implimentation specified feature
+  (if (eq 'character (upgraded-array-element-type 'extended-char))
+      (unify-with '((a . (array character)))
+        (type-unify '(a) '(a a) '((array character) (array extended-char))))
+      (unify-fail
+        (type-unify '(a) '(a a) '((array character) (array extended-char)))))
+  (if (eq 'character (upgraded-array-element-type 'base-char))
+      (unify-with '((a . (array character)))
+        (type-unify '(a) '(a a) '((array character) (array base-char))))
+      (unify-fail
+        (type-unify '(a) '(a a) '((array character) (array base-char)))))
+
+  (unify-with '((a . (and (array * 6) (array character *))))
+    (type-unify '(a)
+                '(a a)
+                '((array * 6) (array character *))))
+  (unify-with '((a . fixnum) (b . float))
+    (type-unify '(a b) '(a b) '(fixnum float))))
 
 
 
