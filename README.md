@@ -3,7 +3,7 @@
 
 [![Build Status](https://travis-ci.org/guicho271828/trivialib.type-unify.svg)](https://travis-ci.org/guicho271828/trivialib.type-unify)
 
-* Unifies a parametrized type specifier against an actual type specifier. Handles complicated array-subtypes correctly.
+* Unifies a parametrized type specifier against an actual type specifier. Importantly, it handles complicated array-subtypes and number-related types correctly.
 * Dependency to the implementation-dependent feature is MINIMAL, except `typexpand` in introspect-environment.
 
 
@@ -47,6 +47,16 @@
              '(cons (cons a a) (cons a a))
              '(cons2 (cons2 fixnum)))
 ;; ((A . FIXNUM)), T
+
+;;; number-related types
+(type-unify1 '(a) '(integer * a) 'fixnum)
+;; ((A . 4611686018427387903)), T
+
+(type-unify1 '(a) '(integer * a) '(unsigned-byte 5))
+;; ((A . 31)), T
+
+(type-unify1 '() `(integer ,most-negative-fixnum ,most-positive-fixnum) 'FIXNUM)
+;; NIL, T
 
 
 ;;; ------------- type-unify --------------

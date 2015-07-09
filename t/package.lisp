@@ -140,7 +140,13 @@ Copyright (c) 2015 Masataro Asai (guicho2.71828@gmail.com)
     (type-unify1 '(a) '(integer * a) 'fixnum))
 
   (unify-with '((a . 31))
-    (type-unify1 '(a) '(integer * a) '(unsigned-byte 5))))
+    (type-unify1 '(a) '(integer * a) '(unsigned-byte 5)))
+  
+  (unify-empty
+    (type-unify1 '() `(integer ,most-negative-fixnum ,most-positive-fixnum) 'FIXNUM))
+
+  (unify-empty
+    (type-unify1 '() `(float * *) 'float)))
 
 
 
