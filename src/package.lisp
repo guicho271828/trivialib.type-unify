@@ -242,8 +242,7 @@ unify-p is a boolean indicating if the given template unifies against the given 
        ((mapping1 t)
         (multiple-value-match (unify-dimensions typevars high1 high2)
           ((mapping2 t)
-           (multiple-value-match (merge-mappings-as-and mapping1 mapping2)
-             ((mapping3 t) mapping3)))))))))
+           (merge-mappings-as-and mapping1 mapping2))))))))
 
 (defun unify-arrayoid (typevars template type)
   (ematch* (template type)
