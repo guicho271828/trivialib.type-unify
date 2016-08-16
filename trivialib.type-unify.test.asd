@@ -20,5 +20,4 @@
   :components ((:module "t"
                 :components
                 ((:file "package"))))
-  :perform (load-op :after (op c) (eval (read-from-string "(every #'fiveam::TEST-PASSED-P (5am:run! :trivialib.type-unify))"))
-))
+  :perform (load-op :after (op c) (eval (read-from-string "(5am:run! :trivialib.type-unify)"))))
