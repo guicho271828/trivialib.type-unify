@@ -205,12 +205,14 @@ Copyright (c) 2015 Masataro Asai (guicho2.71828@gmail.com)
   (unify-fail (type-unify '(a) '(a a) '((array extended-char) (array base-char))))
 
   ;; implimentation specified feature
-  (if (eq 'character (upgraded-array-element-type 'extended-char))
+  (if (eq (upgraded-array-element-type 'character)
+          (upgraded-array-element-type 'extended-char))
       (unify-with '((a . (array character)))
         (type-unify '(a) '(a a) '((array character) (array extended-char))))
       (unify-fail
         (type-unify '(a) '(a a) '((array character) (array extended-char)))))
-  (if (eq 'character (upgraded-array-element-type 'base-char))
+  (if (eq (upgraded-array-element-type 'character)
+          (upgraded-array-element-type 'base-char))
       (unify-with '((a . (array character)))
         (type-unify '(a) '(a a) '((array character) (array base-char))))
       (unify-fail
