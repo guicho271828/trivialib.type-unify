@@ -9,14 +9,6 @@
   Author: Masataro Asai (guicho2.71828@gmail.com)
 |#
 
-
-
-(in-package :cl-user)
-(defpackage trivialib.type-unify-asd
-  (:use :cl :asdf))
-(in-package :trivialib.type-unify-asd)
-
-
 (defsystem trivialib.type-unify
   :version "0.1"
   :author "Masataro Asai"
@@ -27,4 +19,4 @@
                 :components
                 ((:file "package"))))
   :description "unifies a polimorphic type specifier with type variables against actual type specifiers"
-  :in-order-to ((test-op (load-op :trivialib.type-unify.test))))
+  :in-order-to ((test-op (test-op :trivialib.type-unify.test))))

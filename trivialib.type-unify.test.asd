@@ -3,13 +3,6 @@
   Copyright (c) 2015 Masataro Asai (guicho2.71828@gmail.com)
 |#
 
-
-(in-package :cl-user)
-(defpackage trivialib.type-unify.test-asd
-  (:use :cl :asdf))
-(in-package :trivialib.type-unify.test-asd)
-
-
 (defsystem trivialib.type-unify.test
   :author "Masataro Asai"
   :mailto "guicho2.71828@gmail.com"
@@ -20,4 +13,4 @@
   :components ((:module "t"
                 :components
                 ((:file "package"))))
-  :perform (load-op :after (op c) (eval (read-from-string "(5am:run! :trivialib.type-unify)"))))
+  :perform (test-op (op c) (eval (read-from-string "(5am:run! :trivialib.type-unify)"))))
