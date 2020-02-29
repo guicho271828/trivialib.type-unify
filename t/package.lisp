@@ -44,7 +44,8 @@ Copyright (c) 2015 Masataro Asai (guicho2.71828@gmail.com)
                     (ematch* (a b)
                       (((integer) (integer)) (< a b))
                       (((type string) (type string)) (string< a b))
-                      (_ (values nil t)))))))
+                      (_ (values nil t)))))
+                 :test #'equal))
 
   (is (set-equal '(5 "c")
                  (trivialib.type-unify::remove-smaller
@@ -53,7 +54,8 @@ Copyright (c) 2015 Masataro Asai (guicho2.71828@gmail.com)
                     (ematch* (a b)
                       (((integer) (integer)) (< a b))
                       (((type string) (type string)) (string< a b))
-                      (_ (values nil t))))))))
+                      (_ (values nil t)))))
+                 :test #'equal)))
 
 (test trivialib.type-unify::merge-mappings-as-or
   (is (equal '((a . fixnum) (b . fixnum))
